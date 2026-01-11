@@ -38,6 +38,6 @@ if(tag) parts.push(tag);
 
 parts.push(message);
 
-data = parts.join(" | " )+"\n";
+const data = parts.join(" | " )+"\n";
 
 fs.appendFileSync("idle.log", data);
