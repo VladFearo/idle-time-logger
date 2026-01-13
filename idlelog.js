@@ -32,10 +32,55 @@ function formatLine(timestamp, tag, message){
     return parts.join(" | " )+"\n";
 }
 
-const timestamp = createTimestamp();
+
+
+function handleSummary(argv){
+    const idx = argv.indexOf("--summary");
+    if (idx === -1) return;
+
+    const summaryCount = argv.filter(a => a === "--summary").length;
+    if(summaryCount > 1) throw new Error("Duplicate --summary");
+
+    const restArgs = argv.filter(a => a!== "--summary");
+    
+    if (restArgs.length !== 1) throw new Error("Summary requires exactly one filepath");
+
+    const [filePath] = restArgs;
+    
+    if(filePath.startsWith("--")) throw new Error("Summary mode does not accept flags");
+
+    try {
+        const stat = fs.statSync(filePath);
+        if (!stat.isFile()) {
+        throw new Error("NOT_A_FILE");
+        }
+        const text = fs.readFileSync(filePath, "utf8");  
+        const lines = text
+        .split(/\r?\n/)
+        .map(l => l.trim())
+        .filter(Boolean);
+        lines.forEach(l => console.log(l));
+    process.exit(0);
+    } catch (err) {
+        if (err.code === "ENOENT") {
+            throw new Error(`File not found: ${filePath}`);
+        }
+        if (err.code === "EACCES") {
+            throw new Error(`Permission denied: ${filePath}`);
+        }
+        if (err.message === "NOT_A_FILE") {
+            throw new Error(`Not a file: ${filePath}`);
+        }
+        throw new Error(`Cannot read file: ${filePath}`);
+    }
+
+    
+}
 
 const args = process.argv.slice(2);
 
+handleSummary(args);
+const timestamp = createTimestamp();
 let tag, restArgs;
 
 try {
