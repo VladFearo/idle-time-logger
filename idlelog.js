@@ -32,7 +32,25 @@ function formatLine(timestamp, tag, message){
     return parts.join(" | " )+"\n";
 }
 
+function formatSummary(lines, filePath){
+    const totalEntries = lines.length;
+    const tags = {};
+    let taggedEntries = 0;
+    for(const line of lines){
+        const parts = line.split(" | ").map(p => p.trim());
+        if(parts.length >= 3){
+            const key = parts[1].trim();
+            tags[key] = (tags[key] || 0) + 1;
+            taggedEntries++;
+        }
+    }
+    const untaggedEntries = totalEntries - taggedEntries;
 
+    console.log(`Summary for ${filePath}\n----------------------\nTotal entries: ${totalEntries}\nTagged entries: ${taggedEntries}\nUntagged entries: ${untaggedEntries}\n\nTag breakdown:`);
+    Object.entries(tags)
+        .sort((a, b) => b[1] - a[1])
+        .forEach(([t, c]) => console.log(`${t}: ${c}`));
+}
 
 function handleSummary(argv){
     const idx = argv.indexOf("--summary");
@@ -59,8 +77,9 @@ function handleSummary(argv){
         .split(/\r?\n/)
         .map(l => l.trim())
         .filter(Boolean);
-        lines.forEach(l => console.log(l));
-    process.exit(0);
+        formatSummary(lines, filePath);
+
+        process.exit(0);
     } catch (err) {
         if (err.code === "ENOENT") {
             throw new Error(`File not found: ${filePath}`);
